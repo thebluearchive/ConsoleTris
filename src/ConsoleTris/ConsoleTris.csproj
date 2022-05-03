@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Melanchall.DryWetMidi" Version="6.0.1" />
+    <PackageReference Include="Pastel" Version="3.0.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.1" />
+    <PackageReference Include="SixLabors.Shapes" Version="1.0.0-beta0009" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="res\consoletris.mid">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
