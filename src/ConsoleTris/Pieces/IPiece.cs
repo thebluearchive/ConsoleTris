@@ -5,38 +5,30 @@ namespace ConsoleTris.Pieces
     /// <summary>
     /// Represents the 'I' Piece
     /// </summary>
-    public class Line : FallingPiece
+    public class IPiece : FallingPiece
     {
-        public Line(Board board, Point[] points) : base(board)
-        {
-            if (points.Length != 4)
+        public override Point[] Points { get; protected set; } = new Point[4]
             {
-                throw new ArgumentException("Line must contain 4 segments.");
-            }
-            Points = points;
-            foreach (Point point in Points)
-            {
-                board.OccupiedFalling[point.X, point.Y] = true;
-            }
-        }
-
-        public Line(Board board) : base(board)
-        {
-            Points = new Point[4]
-            {
-                new Point(3, 0),
-                new Point(4, 0),
-                new Point(5, 0),
-                new Point(6, 0)
+                new Point(0, 0),
+                new Point(1, 0),
+                new Point(2, 0),
+                new Point(3, 0)
             };
 
-            foreach (Point point in Points)
-            {
-                board.OccupiedFalling[point.X, point.Y] = true;
-            }
+        public IPiece(Board board) : base(board)
+        {
             BlockType = BlockType.I;
         }
 
+        public override void Initialize()
+        {
+            foreach (Point point in Points)
+            {
+                //translate points to the middle of the board
+                point.X += _board.WIDTH / 2 - 2;
+                _board.OccupiedFalling[point.X, point.Y] = true;
+            }
+        }
         /// <summary>
         /// Causes the rotate if possible
         /// </summary>

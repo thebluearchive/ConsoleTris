@@ -8,21 +8,22 @@ namespace ConsoleTris.Pieces
 {
     public class OPiece : FallingPiece
     {
-        public OPiece(Board board) : base(board)
-        {
-            Points = new Point[4]
+        public override Point[] Points { get; protected set; } = new Point[4]
             {
-                new Point(4, 1),
-                new Point(5, 1),
-                new Point(4, 0),
-                new Point(5, 0)
+                new Point(0, 1),
+                new Point(1, 1),
+                new Point(0, 0),
+                new Point(1, 0)
             };
 
-            foreach (Point point in Points)
-            {
-                board.OccupiedFalling[point.X, point.Y] = true;
-            }
+        public OPiece(Board board) : base(board)
+        {
             BlockType = BlockType.O;
+        }
+
+        public override void Rotate()
+        {
+            // OPiece cannot rotate
         }
     }
 }

@@ -8,20 +8,16 @@ namespace ConsoleTris.Pieces
 {
     public class LPiece : FallingPiece
     {
-        public LPiece(Board board) : base(board)
-        {
-            Points = new Point[4]
+        public override Point[] Points { get; protected set; } = new Point[4]
             {
-                new Point(4, 1),
-                new Point(5, 1),
-                new Point(6, 1),
-                new Point(6, 0)
+                new Point(0, 1),
+                new Point(1, 1),
+                new Point(2, 1),
+                new Point(2, 0)
             };
 
-            foreach (Point point in Points)
-            {
-                board.OccupiedFalling[point.X, point.Y] = true;
-            }
+        public LPiece(Board board) : base(board)
+        {
             BlockType = BlockType.L;
         }
 

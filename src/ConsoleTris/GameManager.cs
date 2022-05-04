@@ -10,9 +10,13 @@ namespace ConsoleTris
     {
         private static Queue<ConsoleKeyInfo> controlQueue = new();
         private static bool gameOngoing = true;
-        private readonly Board board = new();
+        private readonly Board board = new(10, 20, leftBorder, topBorder);
         private static Playback _playback;
-
+        private const int leftBorder = 2;
+        private const int rightBorder = 14;
+        private const int topBorder = 1;
+        private const int bottomBorder = 1;
+        
         public void Run()
         {
             SetupConsole();
@@ -24,8 +28,9 @@ namespace ConsoleTris
         
         private void DrawTitleScreen()
         {
-            Console.WriteLine(@"/------------------\");
-            for (int i = 0; i < board.HEIGHT / 2 - 2; i++)
+            Console.WriteLine(@" __________________ ");
+            Console.WriteLine(@"/                  \");
+            for (int i = 0; i < board.HEIGHT / 2 - 3; i++)
             {
                 Console.WriteLine("|------------------|");
             }
@@ -65,11 +70,11 @@ namespace ConsoleTris
 
         private void SetupConsole()
         {
-            Console.CursorVisible = false;
-            Console.WindowWidth = board.WIDTH * 2;
-            Console.WindowHeight = board.HEIGHT;
-            Console.SetBufferSize(board.WIDTH * 2, board.HEIGHT);
             Console.Clear();
+            Console.WindowWidth = board.WIDTH * 2 + leftBorder + rightBorder;
+            Console.WindowHeight = board.HEIGHT + bottomBorder + topBorder;
+            Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
+            Console.CursorVisible = false;
         }
 
         private static void StartKeyboardListener()

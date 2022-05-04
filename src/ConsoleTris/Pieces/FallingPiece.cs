@@ -11,7 +11,7 @@ namespace ConsoleTris.Pieces
         /// <summary>
         /// Array of points that belong to the piece, relative to the top of the board
         /// </summary>
-        public Point[] Points { get; protected set; }
+        public abstract Point[] Points { get; protected set; }
         /// <summary>
         /// Rotation is a number between 0 and 3, representing how many times the block
         /// has been rotated clockwise from its original position
@@ -30,10 +30,20 @@ namespace ConsoleTris.Pieces
             _board = board;
         }
 
+        public virtual void Initialize()
+        {
+            foreach (Point point in Points)
+            {
+                //translate points to the middle of the board
+                point.X += _board.WIDTH / 2 - 1;
+                _board.OccupiedFalling[point.X, point.Y] = true;
+            }
+        }
+        
         /// <summary>
         /// Causes the piece to fall one block if possible
         /// </summary>
-        public void MoveDown()
+        public virtual void MoveDown()
         {
             foreach (Point point in Points)
             {
@@ -41,7 +51,6 @@ namespace ConsoleTris.Pieces
                 Point pointLowered = new(point.X, point.Y + 1);
                 if (!_board.IsValidPlacement(pointLowered))
                 {
-                    IsFalling = false;
                     PieceStoppedFalling();
                     return;
                 }
@@ -113,6 +122,7 @@ namespace ConsoleTris.Pieces
 
         public void PieceStoppedFalling()
         {
+            IsFalling = false;
             foreach (Point point in Points)
             {
                 _board.OccupiedFalling[point.X, point.Y] = false;
@@ -120,8 +130,54 @@ namespace ConsoleTris.Pieces
             }
         }
 
-        public virtual void Rotate()
+        public Point[] GetProjection()
         {
+            Point[] projectedPoints = new Point[Points.Length];
+
+            for (int i = 0; i < projectedPoints.Length; i++)
+            {
+                projectedPoints[i] = new(Points[i].X, Points[i].Y);                
+            }
+
+            int lowestProjY = 0;
+            for (int i = 0; i < _board.HEIGHT; i++)
+            {
+                for (int j = 0; j < Points.Length; j++)
+                {
+                    projectedPoints[j].Y = Points[j].Y + i;
+                }
+                
+                if (_board.IsValidPlacement(projectedPoints))
+                {
+                    lowestProjY = i;
+                }
+                else // if we find an invalid projection, we cannot search any lower for valid projections
+                {
+                    break;
+                }
+            }
+
+            for (int i = 0; i < projectedPoints.Length; i++)
+            {
+                projectedPoints[i].Y = Points[i].Y + lowestProjY;
+            }
+            return projectedPoints;
         }
+
+        public void Drop()
+        {
+            foreach (Point point in Points)
+            {
+                _board.OccupiedFalling[point.X, point.Y] = false;
+            }
+            Points = GetProjection();
+            foreach (Point point in Points)
+            {
+                _board.OccupiedFalling[point.X, point.Y] = true;
+            }
+            PieceStoppedFalling();
+        }
+
+        public abstract void Rotate();
     }
 }

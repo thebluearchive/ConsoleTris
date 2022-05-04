@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using ConsoleTris.Pieces;
+using System.Linq;
+using System.Diagnostics;
 
 namespace ConsoleTris
 {
@@ -11,19 +13,23 @@ namespace ConsoleTris
         public readonly int WIDTH;
         public readonly int HEIGHT;
         private Random random = new();
+        private int score = 0;
+        private int lvl = 0;
+        private readonly int _posX = 1;
+        private readonly int _posY = 1;
+        private bool displayFPS = false;
+
+        private readonly Stopwatch stopWatch = new();
 
         public bool[,] OccupiedFalling { get; set; }
         public BlockType[,] PlacedBlocks { get; set; }
 
         private FallingPiece fallingPiece;
+        private FallingPiece nextPiece;
 
         private int fallTimer = 0;
 
-        public Board() : this(10, 20)
-        {
-        }
-
-        public Board(int width, int height)
+        public Board(int width, int height, int posX, int posY)
         {
             WIDTH = width;
             HEIGHT = height;
@@ -37,24 +43,82 @@ namespace ConsoleTris
                 }
             }
             OccupiedFalling = new bool[WIDTH, HEIGHT];
+
+            _posX = posX;
+            _posY = posY;
+
+            stopWatch.Start();
         }
 
         public void Draw()
         {
-            StringBuilder sb = new();
-            Console.SetCursorPosition(0, 0);
+            Point[] projection = fallingPiece.GetProjection();
+            
+            // Draw Board
             for (int j = 0; j < HEIGHT; j++)
             {
+                StringBuilder sb = new();
+                Console.SetCursorPosition(_posX, _posY + j);
                 for (int i = 0; i < WIDTH; i++)
                 {
-                    string hex = GetBlockTypeColor(PlacedBlocks[i, j]);
+                    string hex;
                     if (OccupiedFalling[i, j])
                         hex = GetBlockTypeColor(fallingPiece.BlockType);
+                    else if (Array.Exists(projection, p => p.X == i && p.Y == j))
+                        hex = "#222222";
+                    else
+                        hex = GetBlockTypeColor(PlacedBlocks[i, j]);
                     sb.Append("  ".PastelBg(hex));
                 }
+                Console.Write(sb.ToString());
             }
-            string str = sb.ToString();
-            Console.Write(str);
+
+            // Draw Next Piece
+            // TODO: don't hardcode next piece display height and width?
+            int width = 5;
+            int height = 4;
+            bool[, ] nextPieceDisplay = new bool[width, height];
+            foreach (Point point in nextPiece.Points)
+            {
+                nextPieceDisplay[point.X, point.Y] = true;
+            }
+            for (int j = 0; j < height - 1; j++)
+            {
+                StringBuilder sb = new();
+                Console.SetCursorPosition(_posX + 2 * WIDTH, _posY + j + 1);
+                for (int i = 0; i < width; i++)
+                {
+                    string hex;
+                    if (nextPieceDisplay[i, j])
+                    {
+                        hex = GetBlockTypeColor(nextPiece.BlockType);
+                    }
+                    else
+                    {
+                        hex = "#000000";
+                    }
+                    sb.Append("  ".PastelBg(hex));
+                }
+                Console.Write(sb.ToString());
+            }
+
+            // Draw current score and lvl
+            Console.SetCursorPosition(_posX + 2 * WIDTH, _posY + height);
+            Console.Write($"Score: {score}".PastelBg("#000000"));
+            Console.SetCursorPosition(_posX + 2 * WIDTH, _posY + height + 2);
+            Console.Write($"Level {lvl}");
+
+
+            // number of milliseconds a tick has taken on average
+            double averageTick = FPSCalc.CalcAverageTick(stopWatch.ElapsedMilliseconds);
+            double fps = 1000 / averageTick;
+            if (displayFPS)
+            {
+                Console.SetCursorPosition(0, 0);
+                Console.Write($"FPS = {fps.ToString("F2")}");
+            }
+            stopWatch.Reset();
+            stopWatch.Start();
         }
 
         public void UpdateState()
@@ -62,7 +126,7 @@ namespace ConsoleTris
             // If there are currently no falling pieces, we generate a new piece
             if (fallingPiece == null || !fallingPiece.IsFalling)
             {
-                AddPiece();
+                UpdateFallingPiece();
             }
 
             // Cause any existing blocks to fall
@@ -72,39 +136,35 @@ namespace ConsoleTris
             ClearRows();
         }
 
-        private void AddPiece()
+        private void UpdateFallingPiece()
         {
-            FallingPiece newPiece;
-            int randomNum = random.Next(7);
-            switch (randomNum)
+            // This should only run once at the beginning of the game
+            if (nextPiece is null)
             {
-                case 0:
-                    newPiece = new Line(this);
-                    break;
-                case 1:
-                    newPiece = new TPiece(this);
-                    break;
-                case 2:
-                    newPiece = new OPiece(this);
-                    break;
-                case 3:
-                    newPiece = new SPiece(this);
-                    break;
-                case 4:
-                    newPiece = new ZPiece(this);
-                    break;
-                case 5:
-                    newPiece = new LPiece(this);
-                    break;
-                case 6:
-                    newPiece = new JPiece(this);
-                    break;
-                default:
-                    // This case will never be hit, but the compiler really wants me to put it
-                    newPiece = new Line(this);
-                    break;
+                nextPiece = GenerateRandomPiece();
             }
-            fallingPiece = newPiece;
+
+            fallingPiece = nextPiece;
+            fallingPiece.Initialize();
+
+            nextPiece = GenerateRandomPiece();
+        }
+
+        private FallingPiece GenerateRandomPiece()
+        {
+            int randomNum = random.Next(7);
+            FallingPiece newPiece = randomNum switch
+            {
+                0 => new IPiece(this),
+                1 => new TPiece(this),
+                2 => new OPiece(this),
+                3 => new SPiece(this),
+                4 => new ZPiece(this),
+                5 => new LPiece(this),
+                6 => new JPiece(this),
+                _ => new IPiece(this),// This case will never be hit, but the compiler really wants me to put it
+            };
+            return newPiece;
         }
 
         private void Fall()
@@ -131,6 +191,12 @@ namespace ConsoleTris
                     break;
                 case ConsoleKey.C:
                     fallingPiece.Rotate();
+                    break;
+                case ConsoleKey.Spacebar:
+                    fallingPiece.Drop();
+                    break;
+                case ConsoleKey.F:
+                    displayFPS = !displayFPS;
                     break;
             }
         }
@@ -253,6 +319,34 @@ namespace ConsoleTris
                     PlacedBlocks[i, currentRow] = BlockType.Empty;
                 }
             }
+
+            UpdateScore(completedRows.Count);
+        }
+
+        /// <summary>
+        /// Adds the appropriate amount to the score based on the
+        /// number of lines cleared and the current level
+        /// </summary>
+        private void UpdateScore(int linesCleared)
+        {
+            int multiplier = 0;
+            switch (linesCleared)
+            {
+                case 1:
+                    multiplier = 40;
+                    break;
+                case 2:
+                    multiplier = 100;
+                    break;
+                case 3:
+                    multiplier = 300;
+                    break;
+                case 4:
+                    multiplier = 1200;
+                    break;
+            }
+
+            score += (lvl + 1) * multiplier;
         }
     }
 }
