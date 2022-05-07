@@ -40,7 +40,7 @@ namespace ConsoleTris.Pieces
             foreach (Point point in Points)
             {
                 //translate points to the middle of the board
-                point.X += _board.WIDTH / 2 - 2;
+                point.X += Board.WIDTH / 2 - 2;
                 if (_board.PlacedBlocks[point.X, point.Y] != BlockType.Empty)
                 {
                     translateUpOne = true;
@@ -64,11 +64,6 @@ namespace ConsoleTris.Pieces
                 }
             }
 
-            foreach (Point point in Points)
-            {
-                _board.OccupiedFalling[point.X, point.Y] = true;
-            }
-
             return true;
         }
         
@@ -90,12 +85,7 @@ namespace ConsoleTris.Pieces
 
             foreach (Point point in Points)
             {
-                _board.OccupiedFalling[point.X, point.Y] = false;
                 point.Y++;
-            }
-            foreach (Point point in Points)
-            {
-                _board.OccupiedFalling[point.X, point.Y] = true;
             }
         }
 
@@ -117,12 +107,7 @@ namespace ConsoleTris.Pieces
             if (!canMoveRight) return;
             foreach (Point point in Points)
             {
-                _board.OccupiedFalling[point.X, point.Y] = false;
                 point.X++;
-            }
-            foreach (Point point in Points)
-            {
-                _board.OccupiedFalling[point.X, point.Y] = true;
             }
         }
         
@@ -143,12 +128,7 @@ namespace ConsoleTris.Pieces
 
             foreach (Point point in Points)
             {
-                _board.OccupiedFalling[point.X, point.Y] = false;
                 point.X--;
-            }
-            foreach (Point point in Points)
-            {
-                _board.OccupiedFalling[point.X, point.Y] = true;
             }
         }
 
@@ -157,11 +137,8 @@ namespace ConsoleTris.Pieces
             IsFalling = false;
             foreach (Point point in Points)
             {
-                _board.OccupiedFalling[point.X, point.Y] = false;
                 _board.PlacedBlocks[point.X, point.Y] = BlockType;
             }
-
-            // TODO: consider making a delegate that 
         }
 
         public Point[] GetProjection()
@@ -174,7 +151,7 @@ namespace ConsoleTris.Pieces
             }
 
             int lowestProjY = 0;
-            for (int i = 0; i < _board.HEIGHT; i++)
+            for (int i = 0; i < Board.HEIGHT; i++)
             {
                 for (int j = 0; j < Points.Length; j++)
                 {
@@ -200,15 +177,7 @@ namespace ConsoleTris.Pieces
 
         public void Drop()
         {
-            foreach (Point point in Points)
-            {
-                _board.OccupiedFalling[point.X, point.Y] = false;
-            }
             Points = GetProjection();
-            foreach (Point point in Points)
-            {
-                _board.OccupiedFalling[point.X, point.Y] = true;
-            }
             PieceStoppedFalling();
         }
 

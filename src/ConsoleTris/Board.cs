@@ -10,21 +10,17 @@ namespace ConsoleTris
 {
     public class Board
     {
-        public readonly int WIDTH;
-        public readonly int HEIGHT;
+        public const int WIDTH = 10;
+        public const int HEIGHT = 20;
         private Random random = new();
         public int Score { get; private set; } = 0;
         private int lvl = 0;
-        private readonly int _posX = 1;
-        private readonly int _posY = 1;
         private bool displayFPS = false;
         public bool IsLoss = false;
         private bool canSwap = false;
 
         private readonly Stopwatch stopWatch = new();
-
-        public bool[,] OccupiedFalling { get; set; }
-        public BlockType[,] PlacedBlocks { get; set; }
+        public BlockType[,] PlacedBlocks { get; private set; }
 
         private FallingPiece fallingPiece;
         private FallingPiece nextPiece;
@@ -38,13 +34,10 @@ namespace ConsoleTris
 
         private int fallTimer = 0;
 
-        public Board(int width, int height, int posX, int posY)
+        public Board()
         {
-            WIDTH = width;
             // The actual height is 2 blocks taller than the visible viewport
-            HEIGHT = height + 2;
-
-            PlacedBlocks = new BlockType[WIDTH, HEIGHT];
+            PlacedBlocks = new BlockType[WIDTH, HEIGHT + 2];
             for (int i = 0; i < PlacedBlocks.GetLength(0); i++)
             {
                 for (int j = 0; j < PlacedBlocks.GetLength(1); j++)
@@ -52,27 +45,61 @@ namespace ConsoleTris
                     PlacedBlocks[i, j] = BlockType.Empty;
                 }
             }
-            OccupiedFalling = new bool[WIDTH, HEIGHT];
-
-            _posX = posX;
-            _posY = posY;
-
             stopWatch.Start();
         }
 
         public void Draw()
         {
+            DrawBoard(0, 0);
+
+            // Draw current score and lvl
+            DrawScoreAndLevel(2 * WIDTH + 2, 0);
+
+            // Draw Next Piece
+            // TODO: don't hardcode next piece display height and width?
+            DrawNextPiece(2 * WIDTH + 2, 3);
+
+            // Draw held piece
+            DrawHeldPiece(2 * WIDTH + 2, HEIGHT - 3);
+
+
+            // number of milliseconds a tick has taken on average
+            DrawFPS();
+
+            stopWatch.Reset();
+            stopWatch.Start();
+        }
+
+        private void DrawFPS()
+        {
+            double averageTick = FPSCalc.CalcAverageTick(stopWatch.ElapsedMilliseconds);
+            double fps = 1000 / averageTick;
+            if (displayFPS)
+            {
+                Console.SetCursorPosition(0, 0);
+                Console.Write($"FPS = {fps.ToString("F2")}");
+            }
+        }
+
+        /// <summary>
+        /// Draws the game board at the specified position. Includes the game border
+        /// </summary>
+        private void DrawBoard(int xPos, int yPos)
+        {
             Point[] projection = fallingPiece.GetProjection();
+
+            // Draw top border
+            DrawTopBorder(WIDTH + 2, xPos, yPos);
             
             // Draw Board
-            for (int j = 2; j < HEIGHT; j++)
+            for (int j = 2; j < PlacedBlocks.GetLength(1); j++) //start at j = 2 because the first two rows of the board array are not displayed
             {
                 StringBuilder sb = new();
-                Console.SetCursorPosition(_posX, _posY + j - 2);
-                for (int i = 0; i < WIDTH; i++)
+                sb.Append('|');
+                for (int i = 0; i < PlacedBlocks.GetLength(0); i++)
                 {
                     string hex;
-                    if (OccupiedFalling[i, j])
+                    if (Array.Exists(fallingPiece.Points, p => p.X == i && p.Y == j))
                         hex = GetBlockTypeColor(fallingPiece.BlockType);
                     else if (Array.Exists(projection, p => p.X == i && p.Y == j))
                         hex = "#222222";
@@ -80,24 +107,31 @@ namespace ConsoleTris
                         hex = GetBlockTypeColor(PlacedBlocks[i, j]);
                     sb.Append("  ".PastelBg(hex));
                 }
+                sb.Append('|');
+                Console.SetCursorPosition(xPos, yPos + j - 1);
                 Console.Write(sb.ToString());
             }
 
-            // Draw Next Piece
-            // TODO: don't hardcode next piece display height and width?
+            // Draw bottom border
+            DrawBottomBorder(WIDTH + 2, xPos, yPos + HEIGHT + 1);
+        }
+
+        private void DrawNextPiece(int xPos, int yPos)
+        {
             int width = 5;
             int height = 4;
-            bool[, ] nextPieceDisplay = new bool[width, height];
+
+            DrawTopBorder(width + 2, xPos, yPos, "Next:");
+            bool[,] nextPieceDisplay = new bool[width, height];
             foreach (Point point in nextPiece.Points)
             {
                 nextPieceDisplay[point.X, point.Y] = true;
             }
-            Console.SetCursorPosition(_posX + 2 * WIDTH, _posY);
-            Console.Write("Next:");
             for (int j = 0; j < height - 1; j++)
             {
                 StringBuilder sb = new();
-                Console.SetCursorPosition(_posX + 2 * WIDTH, _posY + j + 1);
+                sb.Append('|');
+                Console.SetCursorPosition(xPos, yPos + j + 1);
                 for (int i = 0; i < width; i++)
                 {
                     string hex;
@@ -111,12 +145,19 @@ namespace ConsoleTris
                     }
                     sb.Append("  ".PastelBg(hex));
                 }
+                sb.Append('|');
                 Console.Write(sb.ToString());
             }
 
+            DrawBottomBorder(width + 2, xPos, yPos + height);
+        }
+
+        private void DrawHeldPiece(int xPos, int yPos)
+        {
             // Draw currently held piece
-            width = 5;
-            height = 4;
+            int width = 5;
+            int height = 4;
+            DrawTopBorder(width + 2, xPos, yPos, "Held:");
             bool[,] heldPieceDisplay = new bool[width, height];
             if (heldPiece is not null)
             {
@@ -125,12 +166,11 @@ namespace ConsoleTris
                     heldPieceDisplay[point.X, point.Y] = true;
                 }
             }
-            Console.SetCursorPosition(_posX + 2 * WIDTH, _posY + height);
-            Console.Write("Held:");
             for (int j = 0; j < height - 1; j++)
             {
                 StringBuilder sb = new();
-                Console.SetCursorPosition(_posX + 2 * WIDTH, _posY + j + height + 1);
+                sb.Append('|');
+                Console.SetCursorPosition(xPos, j + yPos + 1);
                 for (int i = 0; i < width; i++)
                 {
                     string hex;
@@ -144,25 +184,48 @@ namespace ConsoleTris
                     }
                     sb.Append("  ".PastelBg(hex));
                 }
+                sb.Append('|');
                 Console.Write(sb.ToString());
             }
 
-            // Draw current score and lvl
-            Console.SetCursorPosition(_posX + 2 * WIDTH, _posY + 2*height);
-            Console.Write($"Score: {Score}");
-            Console.SetCursorPosition(_posX + 2 * WIDTH, _posY + 2*height + 1);
-            Console.Write($"Level {lvl}");
+            DrawBottomBorder(width + 2, xPos, yPos + height);
+        }
 
-            // number of milliseconds a tick has taken on average
-            double averageTick = FPSCalc.CalcAverageTick(stopWatch.ElapsedMilliseconds);
-            double fps = 1000 / averageTick;
-            if (displayFPS)
+        private void DrawScoreAndLevel(int xPos, int yPos)
+        {
+            Console.SetCursorPosition(xPos, yPos);
+            Console.Write($"Level {lvl}");
+            Console.SetCursorPosition(xPos, yPos + 1);
+            Console.Write($"Score: {Score}");
+        }
+
+        private void DrawTopBorder(int borderWidth, int xPos, int yPos, string headerText = "")
+        {
+            StringBuilder sb = new();
+            sb.Append('┌');
+            
+            for (int i = 0; i < borderWidth - 2; i++)
             {
-                Console.SetCursorPosition(0, 0);
-                Console.Write($"FPS = {fps.ToString("F2")}");
+                sb.Append("--");
             }
-            stopWatch.Reset();
-            stopWatch.Start();
+            sb.Append('┐');
+            sb.Remove(0, headerText.Length);
+            sb.Insert(0, headerText);
+            Console.SetCursorPosition(xPos, yPos);
+            Console.Write(sb.ToString());
+        }
+
+        private void DrawBottomBorder(int borderWidth, int xPos, int yPos)
+        {
+            StringBuilder sb = new();
+            sb.Append('└');
+            for (int i = 0; i < borderWidth - 2; i++) // Adding two to account for the border
+            {
+                sb.Append("--");
+            }
+            sb.Append('┘');
+            Console.SetCursorPosition(xPos, yPos);
+            Console.Write(sb.ToString());
         }
 
         public void UpdateState()
@@ -252,10 +315,6 @@ namespace ConsoleTris
         private void SwapFallingPiece()
         {
             if (!canSwap) return;
-            foreach (Point point in fallingPiece.Points)
-            {
-                OccupiedFalling[point.X, point.Y] = false;
-            }
             if (heldPiece is null)
             {
                 heldPiece = (FallingPiece)Activator.CreateInstance(fallingPiece.GetType(), this);
@@ -269,10 +328,6 @@ namespace ConsoleTris
                 fallingPiece.Initialize();
                 heldPiece = temp;
             }
-            foreach (Point point in fallingPiece.Points)
-            {
-                OccupiedFalling[point.X, point.Y] = true;
-            }
             canSwap = false;
         }
 
@@ -284,9 +339,9 @@ namespace ConsoleTris
         public bool IsInBounds(Point point)
         {
             return point.X >= 0
-                && point.X < WIDTH
+                && point.X < PlacedBlocks.GetLength(0)
                 && point.Y >= 0
-                && point.Y < HEIGHT;
+                && point.Y < PlacedBlocks.GetLength(1);
         }
 
         /// <summary>
@@ -308,7 +363,6 @@ namespace ConsoleTris
         /// <returns></returns>
         public bool IsValidPlacement(Point point)
         {
-            bool inBounds = IsInBounds(point);
             return IsInBounds(point) && !IsCollision(point);
         }
 
@@ -350,18 +404,18 @@ namespace ConsoleTris
                     return "#000000";
             }
 
-            // Code should never hit this since BlockType is non-nullable and 
-            // we have checked every possible value for the BlockType enum.
-            // However the compiler is unhappy unless I return something or throw
-            // an error here. So I am choosing to throw an error if this line of 
-            // code is ever hit.
+            // Program should never hit this line of code since BlockType is
+            // non-nullable and we have checked every possible value for the
+            // BlockType enum. However the compiler is unhappy unless I return
+            // something or throw an error here. So I am choosing to throw an
+            // error if this line of code is ever hit.
             throw new Exception("Unable to determine Block Type.");
         }
 
         private void ClearRows()
         {
             HashSet<int> completedRows = new();
-            for (int j = HEIGHT - 1; j >= 0; j--)
+            for (int j = PlacedBlocks.GetLength(1) - 1; j >= 0; j--)
             {
                 bool rowCompleted = true;
                 for (int i = 0; i < WIDTH; i++)
@@ -374,8 +428,8 @@ namespace ConsoleTris
                 }
             }
 
-            int currentRow = HEIGHT - 1;
-            for (int j = HEIGHT - 1; j >= 0; j--)
+            int currentRow = PlacedBlocks.GetLength(1) - 1;
+            for (int j = PlacedBlocks.GetLength(1) - 1; j >= 0; j--)
             {
                 if (!completedRows.Contains(j))
                 {
@@ -389,7 +443,7 @@ namespace ConsoleTris
 
             for (int j = 0; j < currentRow; j++)
             {
-                for (int i = 0; i < WIDTH; i++)
+                for (int i = 0; i < PlacedBlocks.GetLength(0); i++)
                 {
                     PlacedBlocks[i, currentRow] = BlockType.Empty;
                 }

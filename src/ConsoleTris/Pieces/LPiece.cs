@@ -68,14 +68,6 @@ namespace ConsoleTris.Pieces
             // Check validity of proposed rotation
             if (!_board.IsValidPlacement(newPoints)) return;
 
-            foreach (Point point in Points)
-            {
-                _board.OccupiedFalling[point.X, point.Y] = false;
-            }
-            foreach (Point point in newPoints)
-            {
-                _board.OccupiedFalling[point.X, point.Y] = true;
-            }
             Points = newPoints;
 
             // Increment the rotation counter

@@ -12,7 +12,7 @@ namespace ConsoleTris
         private static bool gameOngoing = true;
         private Board board;
         private static Playback _playback;
-        private const int leftBorder = 2;
+        private const int leftBorder = 0;
         private const int rightBorder = 14;
         private const int topBorder = 1;
         private const int bottomBorder = 1;
@@ -21,7 +21,7 @@ namespace ConsoleTris
         {
             while (true)
             {
-                board = new(10, 20, leftBorder, topBorder);
+                board = new();
                 SetupConsole();
                 gameOngoing = true;
                 DrawTitleScreen();
@@ -36,12 +36,12 @@ namespace ConsoleTris
             Console.Clear();
             Console.WriteLine(@" __________________ ");
             Console.WriteLine(@"/                  \");
-            for (int i = 0; i < board.HEIGHT / 2 - 3; i++)
+            for (int i = 0; i < Board.HEIGHT / 2 - 3; i++)
             {
                 Console.WriteLine("|------------------|");
             }
             Console.WriteLine(@"|~  CONSOLE-TRIS  ~|");
-            for (int i = 0; i < board.HEIGHT / 2 - 3; i++)
+            for (int i = 0; i < Board.HEIGHT / 2 - 3; i++)
             {
                 Console.WriteLine("|------------------|");
             }
@@ -89,8 +89,8 @@ namespace ConsoleTris
         private void SetupConsole()
         {
             Console.Clear();
-            Console.WindowWidth = board.WIDTH * 2 + leftBorder + rightBorder;
-            Console.WindowHeight = board.HEIGHT + bottomBorder + topBorder;
+            Console.WindowWidth = Board.WIDTH * 2 + leftBorder + rightBorder;
+            Console.WindowHeight = Board.HEIGHT + bottomBorder + topBorder;
             Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
             Console.CursorVisible = false;
         }
