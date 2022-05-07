@@ -30,14 +30,46 @@ namespace ConsoleTris.Pieces
             _board = board;
         }
 
-        public virtual void Initialize()
+        /// <summary>
+        /// Places the falling piece on the board
+        /// </summary>
+        /// <returns>True if the piece can be successfully placed, false otherwise</returns>
+        public virtual bool Initialize()
         {
+            bool translateUpOne = false;
             foreach (Point point in Points)
             {
                 //translate points to the middle of the board
-                point.X += _board.WIDTH / 2 - 1;
+                point.X += _board.WIDTH / 2 - 2;
+                if (_board.PlacedBlocks[point.X, point.Y] != BlockType.Empty)
+                {
+                    translateUpOne = true;
+                }
+            }
+            
+            if (translateUpOne)
+            {
+                foreach (Point point in Points)
+                {
+                    point.Y -= 1;
+                }
+            }
+
+            // Check loss condition
+            foreach (Point point in Points)
+            {
+                if (_board.PlacedBlocks[point.X, point.Y] != BlockType.Empty)
+                {
+                    return false;
+                }
+            }
+
+            foreach (Point point in Points)
+            {
                 _board.OccupiedFalling[point.X, point.Y] = true;
             }
+
+            return true;
         }
         
         /// <summary>
@@ -128,6 +160,8 @@ namespace ConsoleTris.Pieces
                 _board.OccupiedFalling[point.X, point.Y] = false;
                 _board.PlacedBlocks[point.X, point.Y] = BlockType;
             }
+
+            // TODO: consider making a delegate that 
         }
 
         public Point[] GetProjection()

@@ -9,10 +9,10 @@ namespace ConsoleTris.Pieces
     {
         public override Point[] Points { get; protected set; } = new Point[4]
             {
-                new Point(0, 0),
-                new Point(1, 0),
-                new Point(2, 0),
-                new Point(3, 0)
+                new Point(0, 2),
+                new Point(1, 2),
+                new Point(2, 2),
+                new Point(3, 2)
             };
 
         public IPiece(Board board) : base(board)
@@ -20,15 +20,6 @@ namespace ConsoleTris.Pieces
             BlockType = BlockType.I;
         }
 
-        public override void Initialize()
-        {
-            foreach (Point point in Points)
-            {
-                //translate points to the middle of the board
-                point.X += _board.WIDTH / 2 - 2;
-                _board.OccupiedFalling[point.X, point.Y] = true;
-            }
-        }
         /// <summary>
         /// Causes the rotate if possible
         /// </summary>

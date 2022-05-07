@@ -8,9 +8,9 @@ namespace ConsoleTris
 {
     internal class GameManager
     {
-        private static Queue<ConsoleKeyInfo> controlQueue = new();
+        private static Queue<ConsoleKeyInfo> controlQueue;
         private static bool gameOngoing = true;
-        private readonly Board board = new(10, 20, leftBorder, topBorder);
+        private Board board;
         private static Playback _playback;
         private const int leftBorder = 2;
         private const int rightBorder = 14;
@@ -19,15 +19,21 @@ namespace ConsoleTris
         
         public void Run()
         {
-            SetupConsole();
-            DrawTitleScreen();
-            PlayMidi();
-            StartKeyboardListener();
-            ExecuteGameLoop();
+            while (true)
+            {
+                board = new(10, 20, leftBorder, topBorder);
+                SetupConsole();
+                gameOngoing = true;
+                DrawTitleScreen();
+                //PlayMidi();
+                StartKeyboardListener();
+                ExecuteGameLoop();
+            }
         }
         
         private void DrawTitleScreen()
         {
+            Console.Clear();
             Console.WriteLine(@" __________________ ");
             Console.WriteLine(@"/                  \");
             for (int i = 0; i < board.HEIGHT / 2 - 3; i++)
@@ -42,6 +48,7 @@ namespace ConsoleTris
             Console.WriteLine(@"\__________________/");
             Console.WriteLine("Press any key...");
             Console.ReadKey(true);
+            Console.Clear();
         }
 
         private void PlayMidi()
@@ -53,19 +60,30 @@ namespace ConsoleTris
             _playback.Start();
         }
 
-
         private void ExecuteGameLoop()
         {
             while (gameOngoing)
             {
                 board.UpdateState();
                 board.Draw();
+                gameOngoing = !board.IsLoss;
                 if (controlQueue.TryDequeue(out ConsoleKeyInfo keyInfo))
                 {
                     board.HandleUserInput(keyInfo);
                 }
                 Thread.Sleep(10);
             }
+            DisplayLosingScreen();
+        }
+
+        private void DisplayLosingScreen()
+        {
+            Console.SetCursorPosition(0, 0);
+            Console.WriteLine($"Game Over. Final Score: {board.Score}");
+            // Prevent the user from accidentally skipping over this screen
+            // for the next two seconds
+            Thread.Sleep(2000);
+            Console.ReadKey(true);
         }
 
         private void SetupConsole()
@@ -79,6 +97,7 @@ namespace ConsoleTris
 
         private static void StartKeyboardListener()
         {
+            controlQueue = new();
             var thread = new Thread(() => {
                 while (gameOngoing)
                 {

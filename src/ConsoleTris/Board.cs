@@ -13,11 +13,13 @@ namespace ConsoleTris
         public readonly int WIDTH;
         public readonly int HEIGHT;
         private Random random = new();
-        private int score = 0;
+        public int Score { get; private set; } = 0;
         private int lvl = 0;
         private readonly int _posX = 1;
         private readonly int _posY = 1;
         private bool displayFPS = false;
+        public bool IsLoss = false;
+        private bool canSwap = false;
 
         private readonly Stopwatch stopWatch = new();
 
@@ -26,13 +28,21 @@ namespace ConsoleTris
 
         private FallingPiece fallingPiece;
         private FallingPiece nextPiece;
+        /// <summary>
+        /// Represents the piece that is currently being held. This piece can
+        /// be swapped with the current falling piece as long as no swap has
+        /// yet occurred with the current falling piece. This piece is null
+        /// a piece is first held.
+        /// </summary>
+        private FallingPiece heldPiece;
 
         private int fallTimer = 0;
 
         public Board(int width, int height, int posX, int posY)
         {
             WIDTH = width;
-            HEIGHT = height;
+            // The actual height is 2 blocks taller than the visible viewport
+            HEIGHT = height + 2;
 
             PlacedBlocks = new BlockType[WIDTH, HEIGHT];
             for (int i = 0; i < PlacedBlocks.GetLength(0); i++)
@@ -55,10 +65,10 @@ namespace ConsoleTris
             Point[] projection = fallingPiece.GetProjection();
             
             // Draw Board
-            for (int j = 0; j < HEIGHT; j++)
+            for (int j = 2; j < HEIGHT; j++)
             {
                 StringBuilder sb = new();
-                Console.SetCursorPosition(_posX, _posY + j);
+                Console.SetCursorPosition(_posX, _posY + j - 2);
                 for (int i = 0; i < WIDTH; i++)
                 {
                     string hex;
@@ -82,6 +92,8 @@ namespace ConsoleTris
             {
                 nextPieceDisplay[point.X, point.Y] = true;
             }
+            Console.SetCursorPosition(_posX + 2 * WIDTH, _posY);
+            Console.Write("Next:");
             for (int j = 0; j < height - 1; j++)
             {
                 StringBuilder sb = new();
@@ -102,12 +114,44 @@ namespace ConsoleTris
                 Console.Write(sb.ToString());
             }
 
-            // Draw current score and lvl
+            // Draw currently held piece
+            width = 5;
+            height = 4;
+            bool[,] heldPieceDisplay = new bool[width, height];
+            if (heldPiece is not null)
+            {
+                foreach (Point point in heldPiece.Points)
+                {
+                    heldPieceDisplay[point.X, point.Y] = true;
+                }
+            }
             Console.SetCursorPosition(_posX + 2 * WIDTH, _posY + height);
-            Console.Write($"Score: {score}".PastelBg("#000000"));
-            Console.SetCursorPosition(_posX + 2 * WIDTH, _posY + height + 2);
-            Console.Write($"Level {lvl}");
+            Console.Write("Held:");
+            for (int j = 0; j < height - 1; j++)
+            {
+                StringBuilder sb = new();
+                Console.SetCursorPosition(_posX + 2 * WIDTH, _posY + j + height + 1);
+                for (int i = 0; i < width; i++)
+                {
+                    string hex;
+                    if (heldPieceDisplay[i, j])
+                    {
+                        hex = GetBlockTypeColor(heldPiece.BlockType);
+                    }
+                    else
+                    {
+                        hex = "#000000";
+                    }
+                    sb.Append("  ".PastelBg(hex));
+                }
+                Console.Write(sb.ToString());
+            }
 
+            // Draw current score and lvl
+            Console.SetCursorPosition(_posX + 2 * WIDTH, _posY + 2*height);
+            Console.Write($"Score: {Score}");
+            Console.SetCursorPosition(_posX + 2 * WIDTH, _posY + 2*height + 1);
+            Console.Write($"Level {lvl}");
 
             // number of milliseconds a tick has taken on average
             double averageTick = FPSCalc.CalcAverageTick(stopWatch.ElapsedMilliseconds);
@@ -126,6 +170,7 @@ namespace ConsoleTris
             // If there are currently no falling pieces, we generate a new piece
             if (fallingPiece == null || !fallingPiece.IsFalling)
             {
+                canSwap = true;
                 UpdateFallingPiece();
             }
 
@@ -145,7 +190,7 @@ namespace ConsoleTris
             }
 
             fallingPiece = nextPiece;
-            fallingPiece.Initialize();
+            IsLoss = !fallingPiece.Initialize();
 
             nextPiece = GenerateRandomPiece();
         }
@@ -169,11 +214,11 @@ namespace ConsoleTris
 
         private void Fall()
         {
-            if (fallTimer % 20 == 0)
+            if (fallTimer == 0)
             {
                 fallingPiece.MoveDown();
             }
-            fallTimer = (fallTimer + 1) % 20;
+            fallTimer = (fallTimer + 1) % 50;
         }
 
         public void HandleUserInput(ConsoleKeyInfo keyInfo)
@@ -189,16 +234,46 @@ namespace ConsoleTris
                 case ConsoleKey.DownArrow:
                     fallingPiece.MoveDown();
                     break;
-                case ConsoleKey.C:
+                case ConsoleKey.Z:
                     fallingPiece.Rotate();
                     break;
                 case ConsoleKey.Spacebar:
                     fallingPiece.Drop();
                     break;
+                case ConsoleKey.C:
+                    SwapFallingPiece();
+                    break;
                 case ConsoleKey.F:
                     displayFPS = !displayFPS;
                     break;
             }
+        }
+
+        private void SwapFallingPiece()
+        {
+            if (!canSwap) return;
+            foreach (Point point in fallingPiece.Points)
+            {
+                OccupiedFalling[point.X, point.Y] = false;
+            }
+            if (heldPiece is null)
+            {
+                heldPiece = (FallingPiece)Activator.CreateInstance(fallingPiece.GetType(), this);
+                //heldPiece = fallingPiece;
+                UpdateFallingPiece();
+            }
+            else
+            {
+                var temp = (FallingPiece)Activator.CreateInstance(fallingPiece.GetType(), this);
+                fallingPiece = heldPiece;
+                fallingPiece.Initialize();
+                heldPiece = temp;
+            }
+            foreach (Point point in fallingPiece.Points)
+            {
+                OccupiedFalling[point.X, point.Y] = true;
+            }
+            canSwap = false;
         }
 
         /// <summary>
@@ -346,7 +421,7 @@ namespace ConsoleTris
                     break;
             }
 
-            score += (lvl + 1) * multiplier;
+            Score += (lvl + 1) * multiplier;
         }
     }
 }
