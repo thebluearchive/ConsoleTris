@@ -1,5 +1,6 @@
 ﻿using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Multimedia;
+using Pastel;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -63,8 +64,9 @@ namespace ConsoleTris
 
         private void DisplayLosingScreen()
         {
-            Console.SetCursorPosition(0, 0);
-            Console.WriteLine($"Game Over. Final Score: {board.Score}");
+            string gameOverText = "Game Over";
+            Console.SetCursorPosition((Console.WindowWidth - gameOverText.Length)/ 2, Console.WindowHeight / 2);
+            Console.WriteLine(gameOverText.Pastel("FF0000"));
             // Prevent the user from accidentally skipping over this screen
             // for the next two seconds
             Thread.Sleep(2000);

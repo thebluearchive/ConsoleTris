@@ -14,11 +14,17 @@ namespace ConsoleTris
         internal const int HEIGHT = 20;
         internal Random random = new();
         internal int Score { get; private set; } = 0;
+        /// <summary>
+        /// Level is incremented each time 10 rows are removed.
+        /// Blocks fall faster until level 10, when the speed of blocks
+        /// falling caps out.
+        /// </summary>
         private int lvl = 0;
         private bool displayFPS = false;
         internal bool IsLoss = false;
         private bool canSwap = false;
         private CollisionManager collisionManager;
+        private int totalRowsCleared = 0;
         
         private readonly Stopwatch stopWatch = new();
         public BlockType[,] PlacedBlocks { get; private set; }
@@ -199,7 +205,14 @@ namespace ConsoleTris
             Console.SetCursorPosition(xPos, yPos);
             Console.Write($"Level {lvl}");
             Console.SetCursorPosition(xPos, yPos + 1);
-            Console.Write($"Score: {Score}");
+            Console.Write($"Score: ");
+            // Wrap the score if necessary
+            if (Score.ToString().Length + Console.GetCursorPosition().Left > Console.WindowWidth)
+            {
+                Console.SetCursorPosition(xPos + 1, yPos + 2);
+            }
+
+            Console.Write($"{Score}");
         }
 
         private void DrawTopBorder(int borderWidth, int xPos, int yPos, string headerText = "")
@@ -284,7 +297,7 @@ namespace ConsoleTris
             {
                 fallingPiece.MoveDown();
             }
-            fallTimer = (fallTimer + 1) % 50;
+            fallTimer = (fallTimer + 1) % Math.Max(50 - lvl * 4, 10);
         }
 
         public void HandleUserInput(ConsoleKeyInfo keyInfo)
@@ -371,6 +384,8 @@ namespace ConsoleTris
                 }
             }
 
+            totalRowsCleared += completedRows.Count;
+            lvl = totalRowsCleared / 10;
             UpdateScore(completedRows.Count);
         }
 
