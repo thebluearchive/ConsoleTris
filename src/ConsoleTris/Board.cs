@@ -8,17 +8,18 @@ using System.Diagnostics;
 
 namespace ConsoleTris
 {
-    public class Board
+    public class Board : IBoard
     {
-        public const int WIDTH = 10;
-        public const int HEIGHT = 20;
-        private Random random = new();
-        public int Score { get; private set; } = 0;
+        internal const int WIDTH = 10;
+        internal const int HEIGHT = 20;
+        internal Random random = new();
+        internal int Score { get; private set; } = 0;
         private int lvl = 0;
         private bool displayFPS = false;
-        public bool IsLoss = false;
+        internal bool IsLoss = false;
         private bool canSwap = false;
-
+        private CollisionManager collisionManager;
+        
         private readonly Stopwatch stopWatch = new();
         public BlockType[,] PlacedBlocks { get; private set; }
 
@@ -45,6 +46,8 @@ namespace ConsoleTris
                     PlacedBlocks[i, j] = BlockType.Empty;
                 }
             }
+            collisionManager = new CollisionManager(this);
+
             stopWatch.Start();
         }
 
@@ -100,11 +103,11 @@ namespace ConsoleTris
                 {
                     string hex;
                     if (Array.Exists(fallingPiece.Points, p => p.X == i && p.Y == j))
-                        hex = GetBlockTypeColor(fallingPiece.BlockType);
+                        hex = PieceHelpers.GetBlockTypeColor(fallingPiece.BlockType);
                     else if (Array.Exists(projection, p => p.X == i && p.Y == j))
                         hex = "#222222";
                     else
-                        hex = GetBlockTypeColor(PlacedBlocks[i, j]);
+                        hex = PieceHelpers.GetBlockTypeColor(PlacedBlocks[i, j]);
                     sb.Append("  ".PastelBg(hex));
                 }
                 sb.Append('|');
@@ -137,7 +140,7 @@ namespace ConsoleTris
                     string hex;
                     if (nextPieceDisplay[i, j])
                     {
-                        hex = GetBlockTypeColor(nextPiece.BlockType);
+                        hex = PieceHelpers.GetBlockTypeColor(nextPiece.BlockType);
                     }
                     else
                     {
@@ -176,7 +179,7 @@ namespace ConsoleTris
                     string hex;
                     if (heldPieceDisplay[i, j])
                     {
-                        hex = GetBlockTypeColor(heldPiece.BlockType);
+                        hex = PieceHelpers.GetBlockTypeColor(heldPiece.BlockType);
                     }
                     else
                     {
@@ -331,87 +334,6 @@ namespace ConsoleTris
             canSwap = false;
         }
 
-        /// <summary>
-        /// Returns true if a point is within bounds and false otherwise
-        /// </summary>
-        /// <param name="point"></param>
-        /// <returns></returns>
-        public bool IsInBounds(Point point)
-        {
-            return point.X >= 0
-                && point.X < PlacedBlocks.GetLength(0)
-                && point.Y >= 0
-                && point.Y < PlacedBlocks.GetLength(1);
-        }
-
-        /// <summary>
-        /// Returns true if the point collides with other objects on the board,
-        /// false otherwise
-        /// </summary>
-        /// <param name="point"></param>
-        /// <returns></returns>
-        public bool IsCollision(Point point)
-        {
-            return !(PlacedBlocks[point.X, point.Y] == BlockType.Empty);
-        }
-
-        /// <summary>
-        /// Returns true if the point is within bounds and does not collide with
-        /// any existing objects.
-        /// </summary>
-        /// <param name="point"></param>
-        /// <returns></returns>
-        public bool IsValidPlacement(Point point)
-        {
-            return IsInBounds(point) && !IsCollision(point);
-        }
-
-        /// <summary>
-        /// Returns true if each point in the array can be placed at the specified
-        /// location and false otherwise
-        /// </summary>
-        /// <param name="points"></param>
-        /// <returns></returns>
-        public bool IsValidPlacement(Point[] points)
-        {
-            bool isValid = true;
-            foreach (Point point in points)
-            {
-                isValid &= IsValidPlacement(point);
-            }
-            return isValid;
-        }
-
-        private string GetBlockTypeColor(BlockType blockType)
-        {
-            switch (blockType)
-            {
-                case BlockType.I:
-                    return "#00FFFF";
-                case BlockType.J:
-                    return "#0000FF";
-                case BlockType.L:
-                    return "#FFAA00";
-                case BlockType.O:
-                    return "#FFFF00";
-                case BlockType.S:
-                    return "#00FF00";
-                case BlockType.T:
-                    return "#9900FF";
-                case BlockType.Z:
-                    return "#FF0000";
-                case BlockType.Empty:
-                    return "#000000";
-            }
-
-            // Program should never hit this line of code since BlockType is
-            // non-nullable and we have checked every possible value for the
-            // BlockType enum. However the compiler is unhappy unless I return
-            // something or throw an error here. So I am choosing to throw an
-            // error if this line of code is ever hit.
-            throw new Exception("Unable to determine Block Type.");
-        }
-
         private void ClearRows()
         {
             HashSet<int> completedRows = new();
@@ -476,6 +398,20 @@ namespace ConsoleTris
             }
 
             Score += (lvl + 1) * multiplier;
+        }
+
+        public bool IsValidPlacement(Point point)
+        {
+            return collisionManager.IsValidPlacement(point);
+        }
+        public bool IsValidPlacement(Point[] points)
+        {
+            return collisionManager.IsValidPlacement(points);
+        }
+
+        public bool IsInBounds(Point points)
+        {
+            return collisionManager.IsInBounds(points);
         }
     }
 }

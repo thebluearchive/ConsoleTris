@@ -18,14 +18,14 @@ namespace ConsoleTris.Pieces
         /// </summary>
         public int Rotation { get; set; }
         public bool IsFalling { get; protected set; } = true;
-        protected readonly Board _board;
+        protected readonly IBoard _board;
         public BlockType BlockType;
 
         /// <summary>
         /// Creates a new falling piece object
         /// </summary>
         /// <param name="board">The board that this falling piece belongs to</param>
-        public FallingPiece(Board board)
+        public FallingPiece(IBoard board)
         {
             _board = board;
         }
@@ -179,6 +179,25 @@ namespace ConsoleTris.Pieces
         {
             Points = GetProjection();
             PieceStoppedFalling();
+        }
+
+        public virtual void MoveDownNoCollision()
+        {
+            foreach (Point point in Points)
+            {
+                // Check bounds and collisions
+                Point pointLowered = new(point.X, point.Y + 1);
+                if (!_board.IsInBounds(pointLowered))
+                {
+                    PieceStoppedFalling();
+                    return;
+                }
+            }
+
+            foreach (Point point in Points)
+            {
+                point.Y++;
+            }
         }
 
         public abstract void Rotate();

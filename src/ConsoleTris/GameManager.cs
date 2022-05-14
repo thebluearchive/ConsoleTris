@@ -2,13 +2,14 @@
 using Melanchall.DryWetMidi.Multimedia;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 
 namespace ConsoleTris
 {
     internal class GameManager
     {
-        private static Queue<ConsoleKeyInfo> controlQueue;
+        private static Queue<ConsoleKeyInfo> controlQueue = new();
         private static bool gameOngoing = true;
         private Board board;
         private static Playback _playback;
@@ -16,39 +17,22 @@ namespace ConsoleTris
         private const int rightBorder = 14;
         private const int topBorder = 1;
         private const int bottomBorder = 1;
+        private TitleScreenAnimator titleScreenAnimator = new();
         
         public void Run()
         {
+            SetupConsole();
+            Console.WriteLine("Loading...");
+            PlayMidi();
+            titleScreenAnimator.Initiate();
             while (true)
             {
                 board = new();
-                SetupConsole();
                 gameOngoing = true;
-                DrawTitleScreen();
-                //PlayMidi();
                 StartKeyboardListener();
                 ExecuteGameLoop();
+                titleScreenAnimator.Initiate();
             }
-        }
-        
-        private void DrawTitleScreen()
-        {
-            Console.Clear();
-            Console.WriteLine(@" __________________ ");
-            Console.WriteLine(@"/                  \");
-            for (int i = 0; i < Board.HEIGHT / 2 - 3; i++)
-            {
-                Console.WriteLine("|------------------|");
-            }
-            Console.WriteLine(@"|~  CONSOLE-TRIS  ~|");
-            for (int i = 0; i < Board.HEIGHT / 2 - 3; i++)
-            {
-                Console.WriteLine("|------------------|");
-            }
-            Console.WriteLine(@"\__________________/");
-            Console.WriteLine("Press any key...");
-            Console.ReadKey(true);
-            Console.Clear();
         }
 
         private void PlayMidi()
@@ -62,6 +46,7 @@ namespace ConsoleTris
 
         private void ExecuteGameLoop()
         {
+            controlQueue = new Queue<ConsoleKeyInfo>();
             while (gameOngoing)
             {
                 board.UpdateState();
@@ -97,7 +82,6 @@ namespace ConsoleTris
 
         private static void StartKeyboardListener()
         {
-            controlQueue = new();
             var thread = new Thread(() => {
                 while (gameOngoing)
                 {

@@ -16,7 +16,7 @@ namespace ConsoleTris.Pieces
                 new Point(2, 2)
             };
 
-        public ZPiece(Board board) : base(board)
+        public ZPiece(IBoard board) : base(board)
         {
 
             BlockType = BlockType.Z;

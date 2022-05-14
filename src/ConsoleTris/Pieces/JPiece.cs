@@ -16,7 +16,7 @@ namespace ConsoleTris.Pieces
                 new Point(2, 2)
             };
 
-        public JPiece(Board board) : base(board)
+        public JPiece(IBoard board) : base(board)
         {
             BlockType = BlockType.J;
         }

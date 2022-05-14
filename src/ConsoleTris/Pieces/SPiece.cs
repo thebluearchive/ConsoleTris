@@ -15,7 +15,7 @@ namespace ConsoleTris.Pieces
                 new Point(1, 2),
                 new Point(0, 2)
             };
-        public SPiece(Board board) : base(board)
+        public SPiece(IBoard board) : base(board)
         {
             BlockType = BlockType.S;
         }
