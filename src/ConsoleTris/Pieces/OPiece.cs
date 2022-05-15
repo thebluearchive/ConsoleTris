@@ -15,6 +15,7 @@ namespace ConsoleTris.Pieces
                 new Point(1, 1),
                 new Point(2, 1)
             };
+        protected override Point Center { get; set; } = new(1, 1);
 
         public OPiece(IBoard board) : base(board)
         {

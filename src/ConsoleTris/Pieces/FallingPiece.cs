@@ -9,14 +9,13 @@ namespace ConsoleTris.Pieces
     public abstract class FallingPiece
     {
         /// <summary>
-        /// Array of points that belong to the piece, relative to the top of the board
+        /// Array of points that belong to the piece, relative to the top of the board.
         /// </summary>
         public abstract Point[] Points { get; protected set; }
         /// <summary>
-        /// Rotation is a number between 0 and 3, representing how many times the block
-        /// has been rotated clockwise from its original position
+        /// Keeps track of the current piece's center of rotation.
         /// </summary>
-        public int Rotation { get; set; }
+        protected abstract Point Center { get; set; }
         public bool IsFalling { get; protected set; } = true;
         protected readonly IBoard _board;
         public BlockType BlockType;
@@ -46,13 +45,15 @@ namespace ConsoleTris.Pieces
                     translateUpOne = true;
                 }
             }
-            
+            Center.X += Board.WIDTH / 2 - 2;
+
             if (translateUpOne)
             {
                 foreach (Point point in Points)
                 {
                     point.Y -= 1;
                 }
+                Center.Y -= 1;
             }
 
             // Check loss condition
@@ -87,6 +88,7 @@ namespace ConsoleTris.Pieces
             {
                 point.Y++;
             }
+            Center.Y += 1;
         }
 
         public void MoveRight()
@@ -109,6 +111,7 @@ namespace ConsoleTris.Pieces
             {
                 point.X++;
             }
+            Center.X += 1;
         }
         
         public void MoveLeft()
@@ -130,6 +133,7 @@ namespace ConsoleTris.Pieces
             {
                 point.X--;
             }
+            Center.X -= 1;
         }
 
         public void PieceStoppedFalling()
@@ -198,11 +202,22 @@ namespace ConsoleTris.Pieces
             {
                 point.Y++;
             }
+            Center.Y += 1;
         }
 
         public virtual void Rotate()
         {
+            Point[] rotatedPoints = new Point[Points.Length];
+            for (int i = 0; i < rotatedPoints.Length; i++)
+            {
+                Point relPoint = new(Points[i].X - Center.X, Points[i].Y - Center.Y);
+                rotatedPoints[i] = new Point(-relPoint.Y + Center.X, relPoint.X + Center.Y);
+            }
 
+            // Check validity of proposed rotation
+            if (!_board.IsValidPlacement(rotatedPoints)) return;
+
+            Points = rotatedPoints;
         }
     }
 }

@@ -14,6 +14,7 @@ namespace ConsoleTris.Pieces
                 new Point(2, 2),
                 new Point(3, 2)
             };
+        protected override Point Center { get; set; } = new(2, 2);
 
         public IPiece(IBoard board) : base(board)
         {
@@ -25,51 +26,22 @@ namespace ConsoleTris.Pieces
         /// </summary>
         public override void Rotate()
         {
-            Point[] newPoints = new Point[4];
-            for (int i = 0; i < newPoints.Length; i++)
+            Point[] rotatedPoints = new Point[Points.Length];
+            for (int i = 0; i < rotatedPoints.Length; i++)
             {
-                newPoints[i] = new();
-            }
-
-            switch (Rotation)
-            {
-                case 0:
-                    for (int i = 0; i < 4; i++)
-                    {
-                        newPoints[i].X = Points[i].X + 2 - i;
-                        newPoints[i].Y = Points[i].Y + i - 1;
-                    }
-                    break;
-                case 1:
-                    for (int i = 0; i < 4; i++)
-                    {
-                        newPoints[i].X = Points[i].X + 1 - i;
-                        newPoints[i].Y = Points[i].Y + 2 - i;
-                    }
-                    break;
-                case 2:
-                    for (int i = 0; i < 4; i++)
-                    {
-                        newPoints[i].X = Points[i].X + i - 2;
-                        newPoints[i].Y = Points[i].Y + i - 2;
-                    }
-                    break;
-                case 3:
-                    for (int i = 0; i < 4; i++)
-                    {
-                        newPoints[i].X += Points[i].X + i - 1;
-                        newPoints[i].Y += Points[i].Y + 1 - i;
-                    }
-                    break;
+                Point relPoint = new(Points[i].X - Center.X, Points[i].Y - Center.Y);
+                float relPointX = Points[i].X - (Center.X - 0.5f);
+                float relPointY = Points[i].Y - (Center.Y - 0.5f);
+                rotatedPoints[i] = new Point();
+                rotatedPoints[i].X = (int)(-relPointY + (Center.X - 0.5f));
+                rotatedPoints[i].Y = (int)(relPointX + (Center.Y - 0.5f));
+                //rotatedPoints[i] = new Point(-relPoint.Y + Center.X, relPoint.X + Center.Y);
             }
 
             // Check validity of proposed rotation
-            if (!_board.IsValidPlacement(newPoints)) return;
+            if (!_board.IsValidPlacement(rotatedPoints)) return;
 
-            Points = newPoints;
-
-            // Increment the rotation counter
-            Rotation = (Rotation + 1) % 4;
+            Points = rotatedPoints;
         }
     }
 }
