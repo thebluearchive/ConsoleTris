@@ -200,6 +200,9 @@ namespace ConsoleTris.Pieces
             }
         }
 
-        public abstract void Rotate();
+        public virtual void Rotate()
+        {
+
+        }
     }
 }

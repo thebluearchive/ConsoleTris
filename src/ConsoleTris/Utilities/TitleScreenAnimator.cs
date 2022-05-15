@@ -11,14 +11,14 @@ namespace ConsoleTris
 {
     public class TitleScreenAnimator : IBoard
     {
-        private int blockTimer;
         public BlockType[,] PlacedBlocks { get; private set; }
+        private int blockTimer;
         private int width;
         private int height;
         private bool keyReceived;
-        private Random random = new();
+        private readonly Random random = new();
         private CollisionManager collisionManager;
-        private FallingPiece[] fallingPieces = new FallingPiece[maxFallingPieces];
+        private readonly FallingPiece[] fallingPieces = new FallingPiece[maxFallingPieces];
         private int fallingPieceIndex = 0;
         private const int maxFallingPieces = 20;
         private const int hiddenRowsAbove = 4;
@@ -27,7 +27,7 @@ namespace ConsoleTris
         private const string bottomText = "Press any key to begin...";
         private char[,] textArray;
 
-        internal void Initiate()
+        public void Initiate()
         {
             width = Console.WindowWidth/2;
             height = Console.WindowHeight;
@@ -150,7 +150,8 @@ namespace ConsoleTris
                 4 => new ZPiece(this),
                 5 => new LPiece(this),
                 6 => new JPiece(this),
-                _ => new IPiece(this),// This case will never be hit, but the compiler really wants me to put it
+                // This next case will never be hit, but the compiler really wants me to put it
+                _ => throw new InvalidOperationException("Unable to spawn a block. The random number generated was out of range.")
             };
 
             for (int i = 0; i < random.Next(1, width - 1); i++)

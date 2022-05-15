@@ -1,15 +1,10 @@
 ﻿using ConsoleTris.Pieces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ConsoleTris
 {
     public class CollisionManager
     {
-        private IBoard _board;
+        private readonly IBoard _board;
         public CollisionManager(IBoard board)
         {
             _board = board;

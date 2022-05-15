@@ -18,12 +18,11 @@ namespace ConsoleTris
         private const int rightBorder = 14;
         private const int topBorder = 1;
         private const int bottomBorder = 1;
-        private TitleScreenAnimator titleScreenAnimator = new();
+        private static readonly TitleScreenAnimator titleScreenAnimator = new();
         
         public void Run()
         {
             SetupConsole();
-            Console.WriteLine("Loading...");
             PlayMidi();
             titleScreenAnimator.Initiate();
             while (true)
@@ -36,7 +35,7 @@ namespace ConsoleTris
             }
         }
 
-        private void PlayMidi()
+        private static void PlayMidi()
         {
             var midiFile = MidiFile.Read(@"res\consoletris.mid");
             var outputDevice = OutputDevice.GetByName("Microsoft GS Wavetable Synth");
@@ -62,24 +61,25 @@ namespace ConsoleTris
             DisplayLosingScreen();
         }
 
-        private void DisplayLosingScreen()
+        private static void DisplayLosingScreen()
         {
             string gameOverText = "Game Over";
             Console.SetCursorPosition((Console.WindowWidth - gameOverText.Length)/ 2, Console.WindowHeight / 2);
-            Console.WriteLine(gameOverText.Pastel("FF0000"));
+            Console.WriteLine(gameOverText.Pastel("#FF0000"));
             // Prevent the user from accidentally skipping over this screen
             // for the next two seconds
             Thread.Sleep(2000);
             Console.ReadKey(true);
         }
 
-        private void SetupConsole()
+        private static void SetupConsole()
         {
             Console.Clear();
             Console.WindowWidth = Board.WIDTH * 2 + leftBorder + rightBorder;
             Console.WindowHeight = Board.HEIGHT + bottomBorder + topBorder;
             Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
             Console.CursorVisible = false;
+            Console.WriteLine("Loading...");
         }
 
         private static void StartKeyboardListener()

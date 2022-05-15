@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using ConsoleTris.Pieces;
-using System.Linq;
 using System.Diagnostics;
 
 namespace ConsoleTris
@@ -23,7 +22,7 @@ namespace ConsoleTris
         private bool displayFPS = false;
         internal bool IsLoss = false;
         private bool canSwap = false;
-        private CollisionManager collisionManager;
+        private readonly CollisionManager collisionManager;
         private int totalRowsCleared = 0;
         
         private readonly Stopwatch stopWatch = new();
@@ -86,7 +85,7 @@ namespace ConsoleTris
             if (displayFPS)
             {
                 Console.SetCursorPosition(0, 0);
-                Console.Write($"FPS = {fps.ToString("F2")}");
+                Console.Write($"FPS = {fps:F2}");
             }
         }
 
