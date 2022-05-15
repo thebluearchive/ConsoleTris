@@ -3,7 +3,7 @@
 namespace ConsoleTris.Pieces
 {
     /// <summary>
-    /// Represents the 'I' Piece
+    /// Represents the 'I' Piece. *Not* an interface.
     /// </summary>
     public class IPiece : FallingPiece
     {
@@ -22,20 +22,17 @@ namespace ConsoleTris.Pieces
         }
 
         /// <summary>
-        /// Causes the rotate if possible
+        /// Causes the piece to rotate if possible.
         /// </summary>
         public override void Rotate()
         {
+            // The I Piece rotates a bit differently than the other pieces. It doesn't rotate about 
+            // a center block, but rather around a center point which is on the corner of a block.
             Point[] rotatedPoints = new Point[Points.Length];
             for (int i = 0; i < rotatedPoints.Length; i++)
             {
                 Point relPoint = new(Points[i].X - Center.X, Points[i].Y - Center.Y);
-                float relPointX = Points[i].X - (Center.X - 0.5f);
-                float relPointY = Points[i].Y - (Center.Y - 0.5f);
-                rotatedPoints[i] = new Point();
-                rotatedPoints[i].X = (int)(-relPointY + (Center.X - 0.5f));
-                rotatedPoints[i].Y = (int)(relPointX + (Center.Y - 0.5f));
-                //rotatedPoints[i] = new Point(-relPoint.Y + Center.X, relPoint.X + Center.Y);
+                rotatedPoints[i] = new Point(-relPoint.Y + Center.X - 1, relPoint.X + Center.Y);
             }
 
             // Check validity of proposed rotation
