@@ -4,6 +4,9 @@
   <ol>
     <li>
       <a href="#about-the-project">About The Project</a>
+      <ul>
+        <li><a href="#features">Features</a></li>
+      </ul>
     </li>
     <li>
       <a href="#getting-started">Getting Started</a>
@@ -22,9 +25,10 @@
 ## About The Project
 
 ConsoleTris is a fully-functional Tetris clone that runs entirely within the windows shell.
-[![ConsoleTris Gameplay]](media/consoletris_gameplay.gif)
 
-Features
+![ConsoleTris Gameplay](media/consoletris_gameplay.gif)
+
+### Features
  - Ability to clear rows
  - Ability to hold a piece
  - Score-keeping
